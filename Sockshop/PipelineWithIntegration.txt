@@ -9,7 +9,7 @@ pipeline{
     stages{
         stage('Checkout code'){
             steps{
-                //git 'https://github.com/dynatrace-acm/dtacmworkshop'                
+                git clone 'https://github.com/CMaheshBL/SockshopOpenshiftDeployment.git'                
 				// Update this with your github link
 				echo 'Checkout code...'				
 				sleep 10
@@ -42,7 +42,7 @@ pipeline{
 												tags: [[context: 'KUBERNETES', key: 'app', value: 'carts'], 
 														[context: 'KUBERNETES', key: 'stage', value: 'dev']]]]) {
 					script{
-						dir("/var/lib/jenkins/workspace/Sockshop"){
+						dir("/var/lib/jenkins/workspace/SockshopOpenshiftDeployment/Sockshop"){
 							if (params.BUILD == "One") {	
 								sh "./stagingdev.sh"
 								echo "Waiting for carts service to start... Staging Dev"
@@ -61,7 +61,7 @@ pipeline{
             steps{
 				echo 'Get Carts URL'
 				script{
-					dir("/var/lib/jenkins/workspace/Sockshop/loadtest"){
+					dir("/var/lib/jenkins/workspace/SockshopOpenshiftDeployment/Sockshop/loadtest"){
 						sh "chmod +x cartstest.sh"
 						sh "./cartstest.sh"						
 					}
@@ -69,11 +69,11 @@ pipeline{
 				script{
 					recordDynatraceSession(envId: 'Dynatrace Server', tagMatchRules: [[meTypes: [[meType: 'SERVICE']], tags: [[context: 'KUBERNETES', key: 'app', value: 'carts'], [context: 'KUBERNETES', key: 'stage', value: 'dev']]]], testCase: 'loadtest') {
 						if (params.BUILD == "One"){
-							dir("/var/lib/jenkins/workspace/Sockshop/loadtest"){								
+							dir("/var/lib/jenkins/workspace/SockshopOpenshiftDeployment/Sockshop/loadtest"){								
 								sh "/home/azureuser/apache-jmeter-5.3/bin/jmeter -n -t carts_load1.jmx -l testresults.jtl"
 							}   
 						} else {
-							dir("/var/lib/jenkins/workspace/Sockshop/loadtest"){
+							dir("/var/lib/jenkins/workspace/SockshopOpenshiftDeployment/Sockshop/loadtest"){
 								sh "/home/azureuser/apache-jmeter-5.3/bin/jmeter -n -t carts_load2.jmx -l testresults.jtl"
 							} 
 						}
@@ -95,7 +95,7 @@ pipeline{
 							tags: [[context: 'KUBERNETES', key: 'app', value: 'carts'], 
 									[context: 'KUBERNETES', key: 'stage', value: 'prod']]]]) {
 				script{
-						dir("/var/lib/jenkins/workspace/Sockshop") {
+						dir("/var/lib/jenkins/workspace/SockshopOpenshiftDeployment/Sockshop") {
 							if (params.BUILD == "One") {
 								sh "./prodcleanbuild.sh"
 								echo "Waiting for carts service to start... Prod clean build"
