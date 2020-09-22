@@ -1,0 +1,113 @@
+pipeline{
+    agent {
+        label 'jenkins-slave'
+    }
+    parameters {
+        choice(name: 'BUILD', choices: ['One', 'Two'], description: 'Choose Build')
+    }
+
+    stages{
+        stage('Checkout code'){
+            steps{
+                //git 'https://github.com/dynatrace-acm/dtacmworkshop'                
+				echo 'Checkout code...'
+				//sleep 10
+            }
+        }
+        stage('Build Code') {
+            steps{
+                echo 'Code Building...'
+                // sleep 20
+            }
+        }
+        stage('Build Image'){
+            steps{
+                echo 'Image Building...'
+                //sleep 20
+                
+            }
+        }
+        stage('Push Image to Repo'){
+            steps{
+				echo 'Pushing Image...'
+				 //sleep 20
+            }
+        }
+        stage('Deploy to Staging'){
+            steps{
+				echo 'Deployment to Staging'
+				createDynatraceDeploymentEvent(envId: 'Dynatrace Server', 
+												tagMatchRules: [[meTypes: [[meType: 'SERVICE']], 
+												tags: [[context: 'KUBERNETES', key: 'app', value: 'carts'], 
+														[context: 'KUBERNETES', key: 'stage', value: 'dev']]]]) {
+					script{
+						dir("/var/lib/jenkins/workspace/Sockshop"){
+							if (params.BUILD == "One") {	
+								sh "./stagingdev.sh"
+								echo "Waiting for carts service to start... Staging Dev"
+								sleep 350
+							} else {
+								sh "./stagingcanary.sh"
+								echo "Waiting for carts service to start... Staging Canary"
+								sleep 350
+							}
+						}
+					}
+				}
+            }
+        }
+        stage ('Run Load Test'){
+            steps{
+				echo 'Get Carts URL'
+				script{
+					dir("/var/lib/jenkins/workspace/Sockshop/loadtest"){
+						sh "chmod +x cartstest.sh"
+						sh "./cartstest.sh"						
+					}
+				}
+				script{
+					recordDynatraceSession(envId: 'Dynatrace Server', tagMatchRules: [[meTypes: [[meType: 'SERVICE']], tags: [[context: 'KUBERNETES', key: 'app', value: 'carts'], [context: 'KUBERNETES', key: 'stage', value: 'dev']]]], testCase: 'loadtest') {
+						if (params.BUILD == "One"){
+							dir("/var/lib/jenkins/workspace/Sockshop/loadtest"){								
+								sh "/home/azureuser/apache-jmeter-5.3/bin/jmeter -n -t carts_load1.jmx -l testresults.jtl"
+							}   
+						} else {
+							dir("/var/lib/jenkins/workspace/Sockshop/loadtest"){
+								sh "/home/azureuser/apache-jmeter-5.3/bin/jmeter -n -t carts_load2.jmx -l testresults.jtl"
+							} 
+						}
+
+					}
+				}
+            }
+        }
+        stage ('Dynatrace Quality Gate'){
+            steps{
+              perfSigDynatraceReports envId: 'Dynatrace Server', nonFunctionalFailure: 2, specFile: '/var/lib/jenkins/workspace/Sockshop/monspec.json'  
+            }
+        }
+        stage ('Deploy to Production'){
+            steps{
+				echo 'Deploying to Production'
+				createDynatraceDeploymentEvent(envId: 'Dynatrace Server', 
+							tagMatchRules: [[meTypes: [[meType: 'SERVICE']], 
+							tags: [[context: 'KUBERNETES', key: 'app', value: 'carts'], 
+									[context: 'KUBERNETES', key: 'stage', value: 'prod']]]]) {
+				script{
+						dir("/var/lib/jenkins/workspace/Sockshop") {
+							if (params.BUILD == "One") {
+								sh "./prodcleanbuild.sh"
+								echo "Waiting for carts service to start... Prod clean build"
+								//sleep 350
+							} else {
+								sh "./prodbadbuild.sh"
+								echo "Waiting for carts service to start... Prod bad build"
+								//sleep 350
+							}
+						}
+					}
+				}
+			}
+		}
+    }
+}
