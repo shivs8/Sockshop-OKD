@@ -10,27 +10,28 @@ pipeline{
         stage('Checkout code'){
             steps{
                 //git 'https://github.com/dynatrace-acm/dtacmworkshop'                
-				echo 'Checkout code...'
-				//sleep 10
+				// Update this with your github link
+				echo 'Checkout code...'				
+				sleep 10
             }
         }
         stage('Build Code') {
             steps{
                 echo 'Code Building...'
-                // sleep 20
+                sleep 10
             }
         }
         stage('Build Image'){
             steps{
                 echo 'Image Building...'
-                //sleep 20
+                sleep 10
                 
             }
         }
         stage('Push Image to Repo'){
             steps{
 				echo 'Pushing Image...'
-				 //sleep 20
+				 sleep 10
             }
         }
         stage('Deploy to Staging'){
@@ -98,11 +99,11 @@ pipeline{
 							if (params.BUILD == "One") {
 								sh "./prodcleanbuild.sh"
 								echo "Waiting for carts service to start... Prod clean build"
-								//sleep 350
+								sleep 350
 							} else {
 								sh "./prodbadbuild.sh"
 								echo "Waiting for carts service to start... Prod bad build"
-								//sleep 350
+								sleep 350
 							}
 						}
 					}
