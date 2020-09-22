@@ -61,14 +61,14 @@ spec:
             medium: Memory
       hostAliases:
         - hostnames:
-            - gfc07687.live.dynatrace.com
-            - sg-ap-southeast-2-52-65-159-6-prod40-sydney.live.ruxit.com
+            - gac07687.live.dynatrace.com
+            - sg-ap-southeast-2-52-65-19-16-prod40-sydney.live.ruxit.com
           ip: 52.65.159.6
         - hostnames:
-            - sg-ap-southeast-2-3-105-220-233-prod40-sydney.live.ruxit.com
+            - sg-ap-southeast-2-3-105-20-23-prod40-sydney.live.ruxit.com
           ip: 3.105.220.233
         - hostnames:
-            - sg-ap-southeast-2-3-106-36-21-prod40-sydney.live.ruxit.com
+            - sg-ap-southeast-2-3-106-36-261-prod40-sydney.live.ruxit.com
           ip: 3.106.36.21              
       nodeSelector:
         beta.kubernetes.io/os: linux
